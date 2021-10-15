@@ -8,8 +8,11 @@ computeNodes = {
 
 Vagrant.configure("2") do |config|
   # get our pre-generated ssh keys
-  public_key = File.read("sshkeys/id_rsa.pub")
-  private_key = File.read("sshkeys/id_rsa")
+  if Dir.exist?('sshkeys') 
+    public_key = File.read("sshkeys/id_rsa.pub")
+    private_key = File.read("sshkeys/id_rsa")
+  end
+ 
 
   config.vm.box = "debian/contrib-buster64"
 
