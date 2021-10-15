@@ -35,10 +35,16 @@ Vagrant.configure("2") do |config|
     box.vm.host_name = "frontend"
     box.vm.network "forwarded_port", guest: 80, host: 8080
     box.vm.network "forwarded_port", guest: 2616, host: 2616
+  
+    
+    # install opennebula via minione
+    box.vm.provision "shell", path: "bootstrap_frontend.sh"
+
     # deploy ssh private/public key before we install
     box.vm.provision "shell", inline: <<-SCRIPT
-      sudo useradd oneadmin -d /var/lib/one -m
-      sudo mkdir -p /var/lib/one/.ssh
+      #sudo useradd oneadmin -d /var/lib/one -m
+      #sudo mkdir -p /var/lib/one/.ssh
+      #sudo chmod u=rwx,g=,o= /var/lib/one/.ssh
       sudo echo '#{private_key}' > /var/lib/one/.ssh/id_rsa
       sudo echo '#{public_key}' > /var/lib/one/.ssh/id_rsa.pub
       sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
@@ -47,8 +53,8 @@ Vagrant.configure("2") do |config|
       sudo chmod -R 600 /var/lib/one/.ssh/authorized_keys
       sudo chown oneadmin:oneadmin /var/lib/one/ -R
       SCRIPT
-      
-    box.vm.provision "shell", path: "bootstrap.sh"
+
+    # ensure our ssh keys are properly picked up
     box.vm.provision "shell", inline: "sudo systemctl restart opennebula-ssh-agent.service"
   end
 
@@ -65,6 +71,7 @@ Vagrant.configure("2") do |config|
       box.vm.provision "shell", inline: <<-SCRIPT
         sudo useradd oneadmin -d /var/lib/one -m
         sudo mkdir -p /var/lib/one/.ssh
+        sudo chmod u=rwx,g=,o= /var/lib/one/.ssh
         sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
         sudo chmod -R 600 /var/lib/one/.ssh/id_rsa
         sudo chmod -R 600 /var/lib/one/.ssh/id_rsa.pub
