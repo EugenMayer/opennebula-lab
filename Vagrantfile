@@ -1,14 +1,19 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+computeNodes = {
+  'compute1' => {'hostname' => 'compute1'},
+  #'compute2' => {'hostname' => 'compute2'}
+}
+
 Vagrant.configure("2") do |config|
+  # get our pre-generated ssh keys
   public_key = File.read("sshkeys/id_rsa.pub")
   private_key = File.read("sshkeys/id_rsa")
 
-  config.vm.synced_folder "./", "/share", create: true
-
   config.vm.box = "debian/contrib-buster64"
 
+  # ensure our hosts can resolve themselfs via hostnames 
   config.vm.network "private_network", type: "dhcp"
   config.hostmanager.enabled = true
   config.hostmanager.manage_host = false
@@ -28,50 +33,54 @@ Vagrant.configure("2") do |config|
       vb.cpus = 3
     end
     box.vm.host_name = "frontend"
-    box.vm.network "forwarded_port", guest: 80, host: 9080
+    box.vm.network "forwarded_port", guest: 80, host: 8080
+    box.vm.network "forwarded_port", guest: 2616, host: 2616
+     # deploy ssh private/public key before we install
+     box.vm.provision "shell", inline: <<-SCRIPT
+      sudo mkdir -p /root/.ssh
+      sudo chmod 700 /root/.ssh
+      sudo echo '#{private_key}' > /root/.ssh/id_rsa
+      sudo echo '#{public_key}' > /root/.ssh/id_rsa.pub
+      sudo echo '#{public_key}' >> /root/.ssh/authorized_keys
+      sudo chmod -R 600 /root/.ssh/id_rsa
+      sudo chmod -R 600 /root/.ssh/id_rsa.pub
+      sudo chmod -R 600 /root/.ssh/authorized_keys.pub
+
+      useradd oneadmin -d /var/lib/one -m
+      sudo echo '#{private_key}' > /var/lib/one/.ssh/id_rsa
+      sudo echo '#{public_key}' > /var/lib/one/.ssh/id_rsa.pub
+      sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
+      sudo chmod -R 600 /var/lib/one/.ssh/id_rsa
+      sudo chmod -R 600 /var/lib/one/.ssh/id_rsa.pub
+      sudo chmod -R 600 /var/lib/one/.ssh/authorized_keys
+      sudo chown oneadmin:oneadmin /var/lib/one/ -R
+      SCRIPT
+      
     box.vm.provision "shell", path: "bootstrap.sh"
-    box.vm.provision "shell", inline: <<-SCRIPT
-        sudo mkdir -p /root/.ssh
-        sudo chmod 700 /root/.ssh
-        sudo echo '#{private_key}' >> /root/.ssh/id_rsa
-        sudo echo '#{public_key}' >> /root/.ssh/id_rsa.pub
-        sudo chmod -R 600 /root/.ssh/id_rsa
-        sudo chmod -R 600 /root/.ssh/id_rsa.pub
+   
+
+      box.vm.provision "shell", inline: "sudo systemctl restart opennebula-ssh-agent.service"
+  end
+
+  computeNodes.keys.sort.each do |key|
+    hostname = computeNodes[key]['hostname']
+    config.vm.define hostname do |box|
+      box.vm.provider :virtualbox do |vb|
+        vb.memory = 2048
+        vb.cpus = 2
+        vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
+      end
+      box.vm.host_name = hostname
+      box.vm.provision "shell", path: "bootstrap_compute.sh"
+      box.vm.provision "shell", inline: <<-SCRIPT
+        useradd oneadmin -d /var/lib/one -m
+        sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
+        sudo chmod -R 600 /var/lib/one/.ssh/id_rsa
+        sudo chmod -R 600 /var/lib/one/.ssh/id_rsa.pub
+        sudo chmod -R 600 /var/lib/one/.ssh/authorized_keys
+        sudo chown oneadmin:oneadmin /var/lib/one/ -R
         SCRIPT
-  end
-
-  # first compute box
-  config.vm.define :compute1 do |box|
-    box.vm.provider :virtualbox do |vb|
-      vb.memory = 2048
-      vb.cpus = 2
-      vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
     end
-    box.vm.host_name = "compute1"
-    box.vm.provision "shell", path: "bootstrap_compute.sh"
-    box.vm.provision "shell", inline: <<-SCRIPT
-      sudo mkdir -p /root/.ssh
-      sudo chmod 700 /root/.ssh
-      sudo echo '#{public_key}' >> /root/.ssh/authorized_keys
-      sudo chmod -R 600 /root/.ssh/authorized_keys
-      SCRIPT
-  end
-
-  # second compute box
-  config.vm.define :compute2 do |box|
-    box.vm.provider :virtualbox do |vb|
-      vb.memory = 2048
-      vb.cpus = 2
-      vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
-    end
-    box.vm.host_name = "compute2"
-    box.vm.provision "shell", path: "bootstrap_compute.sh"
-    box.vm.provision "shell", inline: <<-SCRIPT
-      sudo mkdir -p /root/.ssh
-      sudo chmod 700 /root/.ssh
-      sudo echo '#{public_key}' >> /root/.ssh/authorized_keys
-      sudo chmod -R 600 /root/.ssh/authorized_keys
-      SCRIPT
   end
 end
 

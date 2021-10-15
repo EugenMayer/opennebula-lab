@@ -1,4 +1,5 @@
 #!/bin/sh
 
 mkdir -p sshkeys
-ssh-keygen -b 2048 -t rsa -f sshkeys/id_rsa -q -N ""
+rm -fr sshkeys/*
+ssh-keygen -t rsa -b 4096 -C "opennebula@frontend" -f sshkeys/id_rsa -q -N ""

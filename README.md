@@ -17,29 +17,13 @@ vagrant plugin install vagrant-hostmanager
 ```
 git clone https://github.com/EugenMayer/opennebula-lab
 cd opennebula-lab
+
 make start
-
-# or manually
-./generate_keys.sh
-vagrant up --parallel
 ```
 
-Important: What the provisioning for the credentials at the end like
+To see your credentials type `make creds`
 
-Looks like this (example)
-
-```
-frontend:   user: oneadmin
-frontend:   password: YFXHudvWDF
-```
-
-If you missed the password run this
-
-```
-make creds
-```
-
-Now connect via browser on `http://127.0.0.1:9080`
+Now connect via browser on `http://127.0.0.1:8080`
 
 ### Connect to boxes
 
