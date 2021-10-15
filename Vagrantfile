@@ -3,7 +3,7 @@
 
 computeNodes = {
   'compute1' => {'hostname' => 'compute1'},
-  #'compute2' => {'hostname' => 'compute2'}
+  'compute2' => {'hostname' => 'compute2'}
 }
 
 Vagrant.configure("2") do |config|
@@ -68,13 +68,11 @@ Vagrant.configure("2") do |config|
       end
       box.vm.host_name = hostname
       box.vm.provision "shell", path: "bootstrap_compute.sh"
+      # deploy the ssh key of frontend
       box.vm.provision "shell", inline: <<-SCRIPT
-        sudo useradd oneadmin -d /var/lib/one -m
         sudo mkdir -p /var/lib/one/.ssh
         sudo chmod u=rwx,g=,o= /var/lib/one/.ssh
         sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
-        sudo chmod -R 600 /var/lib/one/.ssh/id_rsa
-        sudo chmod -R 600 /var/lib/one/.ssh/id_rsa.pub
         sudo chmod -R 600 /var/lib/one/.ssh/authorized_keys
         sudo chown oneadmin:oneadmin /var/lib/one/ -R
         SCRIPT

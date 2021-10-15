@@ -1,8 +1,9 @@
 #!/bin/sh
 
-sudo ssh-keygen -b 2048 -t rsa -f /tmp/sshkey -q -N ""
 sudo apt-get update
+sudo apt-get install gnupg wget apt-transport-https
 
-# rsync is used to copy files from frontend to compute during INIT 
-sudo apt-get install -y rysnc
-sudo apt-get install -y qemu qemu-kvm
+sudo -- sh -c 'echo "deb https://downloads.opennebula.io/repo/6.0/Debian/10 stable opennebula" > /etc/apt/sources.list.d/opennebula.list'
+sudo -- sh -c 'wget -q -O- https://downloads.opennebula.io/repo/repo.key | apt-key add -'
+sudo apt-get update
+sudo apt-get install opennebula-node-kvm -y
