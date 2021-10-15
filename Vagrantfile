@@ -35,18 +35,10 @@ Vagrant.configure("2") do |config|
     box.vm.host_name = "frontend"
     box.vm.network "forwarded_port", guest: 80, host: 8080
     box.vm.network "forwarded_port", guest: 2616, host: 2616
-     # deploy ssh private/public key before we install
-     box.vm.provision "shell", inline: <<-SCRIPT
-      sudo mkdir -p /root/.ssh
-      sudo chmod 700 /root/.ssh
-      sudo echo '#{private_key}' > /root/.ssh/id_rsa
-      sudo echo '#{public_key}' > /root/.ssh/id_rsa.pub
-      sudo echo '#{public_key}' >> /root/.ssh/authorized_keys
-      sudo chmod -R 600 /root/.ssh/id_rsa
-      sudo chmod -R 600 /root/.ssh/id_rsa.pub
-      sudo chmod -R 600 /root/.ssh/authorized_keys.pub
-
-      useradd oneadmin -d /var/lib/one -m
+    # deploy ssh private/public key before we install
+    box.vm.provision "shell", inline: <<-SCRIPT
+      sudo useradd oneadmin -d /var/lib/one -m
+      sudo mkdir -p /var/lib/one/.ssh
       sudo echo '#{private_key}' > /var/lib/one/.ssh/id_rsa
       sudo echo '#{public_key}' > /var/lib/one/.ssh/id_rsa.pub
       sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
@@ -57,9 +49,7 @@ Vagrant.configure("2") do |config|
       SCRIPT
       
     box.vm.provision "shell", path: "bootstrap.sh"
-   
-
-      box.vm.provision "shell", inline: "sudo systemctl restart opennebula-ssh-agent.service"
+    box.vm.provision "shell", inline: "sudo systemctl restart opennebula-ssh-agent.service"
   end
 
   computeNodes.keys.sort.each do |key|
@@ -73,7 +63,8 @@ Vagrant.configure("2") do |config|
       box.vm.host_name = hostname
       box.vm.provision "shell", path: "bootstrap_compute.sh"
       box.vm.provision "shell", inline: <<-SCRIPT
-        useradd oneadmin -d /var/lib/one -m
+        sudo useradd oneadmin -d /var/lib/one -m
+        sudo mkdir -p /var/lib/one/.ssh
         sudo echo '#{public_key}' >> /var/lib/one/.ssh/authorized_keys
         sudo chmod -R 600 /var/lib/one/.ssh/id_rsa
         sudo chmod -R 600 /var/lib/one/.ssh/id_rsa.pub
