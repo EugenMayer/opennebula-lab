@@ -33,6 +33,8 @@ frontend:   user: oneadmin
 frontend:   password: YFXHudvWDF
 ```
 
+Now connect via browser on `http://127.0.0.1:9080`
+
 ### Connect to boxes
 
 ```
