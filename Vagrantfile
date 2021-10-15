@@ -2,6 +2,9 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
+  public_key = File.read("sshkeys/id_rsa.pub")
+  private_key = File.read("sshkeys/id_rsa")
+
   config.vm.synced_folder "./", "/share", create: true
 
   config.vm.box = "debian/contrib-buster64"
@@ -27,6 +30,14 @@ Vagrant.configure("2") do |config|
     box.vm.host_name = "frontend"
     box.vm.network "forwarded_port", guest: 80, host: 9080
     box.vm.provision "shell", path: "bootstrap.sh"
+    box.vm.provision "shell", inline: <<-SCRIPT
+        sudo mkdir -p /root/.ssh
+        sudo chmod 700 /root/.ssh
+        sudo echo '#{private_key}' >> /root/.ssh/id_rsa
+        sudo echo '#{public_key}' >> /root/.ssh/id_rsa.pub
+        sudo chmod -R 600 /root/.ssh/id_rsa
+        sudo chmod -R 600 /root/.ssh/id_rsa.pub
+        SCRIPT
   end
 
   # first compute box
@@ -37,6 +48,13 @@ Vagrant.configure("2") do |config|
       vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
     end
     box.vm.host_name = "compute1"
+    box.vm.provision "shell", path: "bootstrap_compute.sh"
+    box.vm.provision "shell", inline: <<-SCRIPT
+      sudo mkdir -p /root/.ssh
+      sudo chmod 700 /root/.ssh
+      sudo echo '#{public_key}' >> /root/.ssh/authorized_keys
+      sudo chmod -R 600 /root/.ssh/authorized_keys
+      SCRIPT
   end
 
   # second compute box
@@ -47,6 +65,13 @@ Vagrant.configure("2") do |config|
       vb.customize ["modifyvm", :id, "--nested-hw-virt", "on"]
     end
     box.vm.host_name = "compute2"
+    box.vm.provision "shell", path: "bootstrap_compute.sh"
+    box.vm.provision "shell", inline: <<-SCRIPT
+      sudo mkdir -p /root/.ssh
+      sudo chmod 700 /root/.ssh
+      sudo echo '#{public_key}' >> /root/.ssh/authorized_keys
+      sudo chmod -R 600 /root/.ssh/authorized_keys
+      SCRIPT
   end
 end
 
