@@ -2,6 +2,11 @@
 
 Start an self contained OpenNebula LAB with 2 compute nodes and a frontend node - all using vagrant in one command.
 
+Status:
+
+- OpenNebula: 6.1 CE
+- Debian 11 (frontend and nodes)
+
 ## Requirements
 
 Install `Virtualbox` and `Vagrant` on your system

@@ -14,7 +14,8 @@ Vagrant.configure("2") do |config|
   end
  
 
-  config.vm.box = "debian/contrib-buster64"
+  #config.vm.box = "debian/contrib-buster64"
+  config.vm.box = "debian/bullseye64"
 
   # ensure our hosts can resolve themselfs via hostnames 
   config.vm.network "private_network", type: "dhcp"
